@@ -1,21 +1,11 @@
-const fs = require('fs');
 
-function decorate(path, propertyName) {
-    fs.readFile(path, (err, data) => {
-        if (err) {
-            console.error("Error while reading a file");
-            throw err;
-        }
-        let dag = JSON.parse(data);
-        addPropertyToDAG(dag, propertyName);
-    });
-}
-
-function addPropertyToDAG(dag, propertyName) {
+function decorate(dag, propertyName) {
+    if(!dag.tasks){
+        throw new Error("DAG file doesn't contain tasks within.")
+    }
     dag.tasks.forEach(task => {
         task[propertyName]= "dodane";
         // TODO Implement deployment type logic
     });
 }
-
 exports.decorate = decorate;
