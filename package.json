@@ -6,6 +6,6 @@
     "bluebird": "^3.5.0"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node --use_strict app.js"
   }
 }
