@@ -15,10 +15,11 @@ fs.readFileAsync(config.path)
     .catch(console.error);
 
 function decorateTasks(dag, decorateStrategy) {
-    if(!dag.tasks) {
+    let tasks = dag.tasks;
+    if(!tasks) {
         throw new Error("DAG file doesn't contain tasks within.")
     }
-    dag.tasks.forEach(task => decorateStrategy(task));
+    decorateStrategy(tasks);
     return dag;
 }
 

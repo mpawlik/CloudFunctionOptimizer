@@ -1,5 +1,7 @@
-function montageDecorateStrategy(task) {
-    task.property = task.name;
+function montageDecorateStrategy(tasks) {
+    tasks.forEach(task => {
+        task.property = task.name;
+    })
 }
 
 module.exports = montageDecorateStrategy;
