@@ -1,46 +1,65 @@
-var fs = require('fs');
-var parse = require('csv-parse');
+const Promise = require('bluebird');
+const fs = Promise.promisifyAll(require('fs'));
+const parse = Promise.promisifyAll(require('csv-parse'));
  
-var executionData = 'grafana_data_export.csv';
-var pricingData = 'gcf_pricing.csv';
+const executionData = 'grafana_data_export.csv';
+const pricingData = 'gcf_pricing.csv';
 
-var isComplete = function(line) {
-	return !(line.indexOf("undefined") > -1)
-}
+let parseFile = function(file) {
+    return new Promise(function(resolve, reject) {
+        let parser = parse({ delimiter: ';', from: 2 },
+            function (err, data) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data);
+                }
+                parser.end();
+            });
+        fs.createReadStream(file).pipe(parser);
+    })
+};
 
-var times_parser = parse({delimiter: ';', from: 2}, function (err, data) {
- 		var times = { "1024": 0, "128": 0, "2048": 0, "256": 0, "512": 0 }
-		var count = 0;    
+let parsedTimes = parseFile(executionData)
+    .then(data => {
+        let times = { "1024": 0, "128": 0, "2048": 0, "256": 0, "512": 0 };
+        let count = 0;
 
-		data.forEach(function(line) {
-			if (isComplete(line)) {
-				times["1024"] += parseFloat(line[1])
-				times["128"] += parseFloat(line[2])
-				times["2048"] += parseFloat(line[3])
-				times["256"] += parseFloat(line[4])
-				times["512"] += parseFloat(line[5])
-				count++;
-			}
-    });    
-		var mean_times = { 
-			"128": times["128"]/count,
-			"256": times["256"]/count,
-			"512": times["512"]/count,
-			"1024": times["1024"]/count,
-			"2048": times["2048"]/count
- 		}
-		console.log(mean_times);
+        data.forEach(function(line) {
+            if (!(line.indexOf("undefined") > -1)) {
+                times["1024"] += parseFloat(line[1]);
+                times["128"] += parseFloat(line[2]);
+                times["2048"] += parseFloat(line[3]);
+                times["256"] += parseFloat(line[4]);
+                times["512"] += parseFloat(line[5]);
+                count++;
+            }
+        });
+
+        return {
+            "128": times["128"]/count,
+            "256": times["256"]/count,
+            "512": times["512"]/count,
+            "1024": times["1024"]/count,
+            "2048": times["2048"]/count
+        };
 });
- 
 
-var pricing_parser = parse({delimiter: ';', from: 2}, function (err, data) {
-		var price = {};
-		data.forEach(function(line) {
-			price[line[0]] = line[1];
-		});
-		console.log(price);
+let parsePrices = parseFile(pricingData)
+  .then(data => {
+      let price = {};
+      data.forEach(function(line) {
+        price[line[0]] = line[1];
+      });
+     return price;
 });
 
-fs.createReadStream(executionData).pipe(times_parser);
-fs.createReadStream(pricingData).pipe(pricing_parser);
+parsedTimes.then(mean_times => {
+    console.log(mean_times);
+
+    parsePrices.then(prices => {
+      console.log(prices);
+
+    })
+});
 
