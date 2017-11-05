@@ -48,31 +48,20 @@ let parsedTimes = parseFile(executionData)
 let parsePrices = parseFile(pricingData)
   .then(data => {
     let price = {};
-    data.forEach(function (line) {
-      price[line[0]] = line[1];
-    });
+    data.forEach(line => price[line[0]] = line[1]);
     return price;
   });
 
 parsedTimes.then(mean_times => {
   parsePrices.then(prices => {
-    let performance = {
-      "128": 1 / mean_times["128"],
-      "256": 1 / mean_times["256"],
-      "512": 1 / mean_times["512"],
-      "1024": 1 / mean_times["1024"],
-      "2048": 1 / mean_times["2048"]
-    };
-    console.log(performance);
-
-    let cost_per_unit = {
-      "128": performance["128"] * prices["128"],
-      "256": performance["256"] * prices["256"],
-      "512": performance["512"] * prices["512"],
-      "1024": performance["1024"] * prices["1024"],
-      "2048": performance["2048"] * prices["2048"]
-    };
-    console.log(cost_per_unit);
+    let total_cost = {
+        "128": prices["128"] * (mean_times["128"] * 10),
+        "256": prices["256"] * (mean_times["256"] * 10),
+        "512": prices["512"] * (mean_times["512"] * 10),
+        "1024": prices["1024"] * (mean_times["1024"] * 10),
+        "2048": prices["2048"] * (mean_times["2048"] * 10)
+      };
+    console.log(total_cost);
   })
 });
 
