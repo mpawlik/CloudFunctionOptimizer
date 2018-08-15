@@ -17,6 +17,10 @@ functions:
     events: # The Events that trigger this Function
     # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
       - http: POST ibm-executor-256
+    bind:
+      - service:
+          name: cloud-object-storage
+          instance: Cloud Object Storage-02
 
 
 plugins:
