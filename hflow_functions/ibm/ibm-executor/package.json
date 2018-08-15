@@ -8,7 +8,7 @@
     "openwhisk"
   ],
   "devDependencies": {
-    "serverless-openwhisk": ">=0.13.0"
+    "serverless-openwhisk": "0.14.0"
   },
   "dependencies": {
     "ibm-cos-sdk": "^1.2.3-0"
