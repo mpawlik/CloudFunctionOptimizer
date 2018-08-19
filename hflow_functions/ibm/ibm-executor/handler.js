@@ -1,28 +1,25 @@
 'use strict';
 
-var spawn = require('child_process').spawn;
-var fs = require('fs');
-var async = require('async');
-const AWS = require('ibm-cos-sdk');
+const spawn = require('child_process').spawn;
+const fs = require('fs');
+const async = require('async');
+const IBM = require('ibm-cos-sdk');
+const cos = new IBM.S3({
+    "apiKeyId": "xxx",
+    "endpoint": "xxx",
+    "serviceInstanceId": "xxx"
+});
 
-var cos = new AWS.S3();
+module.exports.executor = function (body) {
 
+    const executable = body.executable;
+    const args = body.args;
+    const inputs = body.inputs;
+    const outputs = body.outputs;
+    const bucket_name = body.options.bucket;
 
-module.exports.executor = function (event, context, mainCallback) {
-
-    // console.log(event);
-
-    var body = JSON.parse(event.body);
-
-    var executable = body.executable;
-    var args = body.args;
-    var inputs = body.inputs;
-    var outputs = body.outputs;
-    var bucket_name = body.options.bucket;
-    var prefix = body.options.prefix;
-
-    var t_start = Date.now();
-    var t_end;
+    const t_start = Date.now();
+    let t_end;
 
     console.log('executable: ' + executable);
     console.log('args:       ' + args);
@@ -30,19 +27,16 @@ module.exports.executor = function (event, context, mainCallback) {
     console.log('inputs[0].name:     ' + inputs[0].name);
     console.log('outputs:    ' + outputs);
     console.log('bucket:     ' + bucket_name);
-    console.log('prefix:     ' + prefix);
-
-
 
     function download(callback) {
         async.each(inputs, function (file, callback) {
 
-            var file_name = file.name;
-            console.log('downloading ' + bucket_name + "/" + prefix + "/" + file_name);
+            const file_name = file.name;
+            console.log('downloading ' + bucket_name + "/" + file_name);
 
-            var params = {
+            const params = {
                 Bucket: bucket_name,
-                Key: prefix + "/" + file_name
+                Key: file_name
             };
 
             cos.getObject(params, function (err, data) {
@@ -55,7 +49,6 @@ module.exports.executor = function (event, context, mainCallback) {
                         if (err) {
                             console.log("Unable to save file " + file_name);
                             callback(err);
-                            return;
                         }
                         console.log("Downloaded file " + JSON.stringify(params));
                         callback();
@@ -73,27 +66,12 @@ module.exports.executor = function (event, context, mainCallback) {
         });
     }
 
-    function createTextFile(bucketName, itemName, fileText) {
-        console.log(`Creating new item: ${itemName}`);
-        return cos.putObject({
-            Bucket: bucketName,
-            Key: itemName,
-            Body: fileText
-        }).promise()
-            .then(() => {
-                console.log(`Item: ${itemName} created!`);
-            })
-            .catch((e) => {
-                console.log(`ERROR: ${e.code} - ${e.message}\n`);
-            });
-    }
-
     function execute(callback) {
-        var proc_name = __dirname + '/' + executable;
+        const proc_name = __dirname + '/' + executable;
 
         console.log('spawning ' + proc_name);
         process.env.PATH = '.:' + __dirname; // add . and __dirname to PATH since e.g. in Montage mDiffFit calls external executables
-        var proc = spawn(proc_name, args, {cwd: '/tmp'});
+        const proc = spawn(proc_name, args, {cwd: '/tmp'});
 
         proc.on('error', function (code) {
             console.error('error!!' + executable + JSON.stringify(code));
@@ -121,30 +99,27 @@ module.exports.executor = function (event, context, mainCallback) {
     function upload(callback) {
         async.each(outputs, function (file, callback) {
 
-            var file_name = file.name;
-            console.log('uploading ' + bucket_name + "/" + prefix + "/" + file_name);
+            const file_name = file.name;
+            console.log('uploading ' + bucket_name + "/" + file_name);
 
             fs.readFile('/tmp/' + file_name, function(err, data) {
                 if (err) {
                     console.log("Error reading file " + file_name);
                     console.log(err);
                     callback(err);
-                    return;
                 }
 
-                var params = {
+                const params = {
                     Bucket: bucket_name,
-                    Key: prefix + "/" + file_name,
+                    Key: file_name,
                     Body: data
                 };
-
 
                 cos.putObject(params, function(err, data) {
                     if (err){
                         console.log("Error uploading file " + file_name);
                         console.log(err);
                         callback(err);
-                        return;
                     }
                     console.log("Uploaded file " + file_name);
                     callback();
@@ -176,11 +151,11 @@ module.exports.executor = function (event, context, mainCallback) {
                 })
             };
 
-            mainCallback(null, response);
+            return response;
         } else {
             console.log('Success');
             t_end = Date.now();
-            var duration = t_end - t_start;
+            const duration = t_end - t_start;
 
             const response = {
                 statusCode: 200,
@@ -189,8 +164,9 @@ module.exports.executor = function (event, context, mainCallback) {
                 })
             };
 
-            mainCallback(null, response);
+            return response;
         }
-    })
+    });
 
+    console.log("return");
 };
