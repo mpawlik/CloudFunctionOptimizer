@@ -1,5 +1,3 @@
-'use strict';
-
 const spawn = require('child_process').spawn;
 const fs = require('fs');
 const async = require('async');
@@ -10,22 +8,22 @@ const cos = new IBM.S3({
     "serviceInstanceId": "xxx"
 });
 
-module.exports.executor = function (body) {
+module.exports.executor = function (params) {
 
-    const executable = body.executable;
-    const args = body.args;
-    const inputs = body.inputs;
-    const outputs = body.outputs;
-    const bucket_name = body.options.bucket;
+    const executable = params.executable;
+    const args = params.args;
+    const inputs = params.inputs;
+    const outputs = params.outputs;
+    const bucket_name = params.options.bucket;
 
     const t_start = Date.now();
     let t_end;
 
     console.log('executable: ' + executable);
     console.log('args:       ' + args);
-    console.log('inputs:     ' + inputs);
+    console.log('inputs:     ' + JSON.stringify(inputs));
     console.log('inputs[0].name:     ' + inputs[0].name);
-    console.log('outputs:    ' + outputs);
+    console.log('outputs:    ' + JSON.stringify(outputs));
     console.log('bucket:     ' + bucket_name);
 
     function download(callback) {
@@ -102,7 +100,7 @@ module.exports.executor = function (body) {
             const file_name = file.name;
             console.log('uploading ' + bucket_name + "/" + file_name);
 
-            fs.readFile('/tmp/' + file_name, function(err, data) {
+            fs.readFile('/tmp/' + file_name, function (err, data) {
                 if (err) {
                     console.log("Error reading file " + file_name);
                     console.log(err);
@@ -115,8 +113,8 @@ module.exports.executor = function (body) {
                     Body: data
                 };
 
-                cos.putObject(params, function(err, data) {
-                    if (err){
+                cos.putObject(params, function (err, data) {
+                    if (err) {
                         console.log("Error uploading file " + file_name);
                         console.log(err);
                         callback(err);
@@ -137,36 +135,37 @@ module.exports.executor = function (body) {
         });
     }
 
-    async.waterfall([
-        download,
-        execute,
-        upload
-    ], function (err, result) {
-        if (err) {
-            console.error('Error: ' + err);
-            const response = {
-                statusCode: 400,
-                body: JSON.stringify({
-                    message: 'Bad Request: ' + JSON.stringify(err)
-                })
-            };
+    return new Promise((resolve, reject) => {
 
-            return response;
-        } else {
-            console.log('Success');
-            t_end = Date.now();
-            const duration = t_end - t_start;
+        async.waterfall([
+            download,
+            execute,
+            upload
+        ], function (err, result) {
+            if (err) {
+                console.error('Error: ' + err);
+                const response = {
+                    statusCode: 400,
+                    body: JSON.stringify({
+                        message: 'Bad Request: ' + JSON.stringify(err)
+                    })
+                };
 
-            const response = {
-                statusCode: 200,
-                body: JSON.stringify({
-                    message: 'IBM OpenWhisk exit: start ' + t_start + ' end ' + t_end + ' duration ' + duration + ' ms, executable: ' + executable + ' args: ' + args
-                })
-            };
+                reject(response) ;
+            } else {
+                console.log('Success');
+                t_end = Date.now();
+                const duration = t_end - t_start;
 
-            return response;
-        }
+                const response = {
+                    statusCode: 200,
+                    body: JSON.stringify({
+                        message: 'IBM OpenWhisk exit: start ' + t_start + ' end ' + t_end + ' duration ' + duration + ' ms, executable: ' + executable + ' args: ' + args
+                    })
+                };
+
+                resolve(response);
+            }
+        });
     });
-
-    console.log("return");
 };

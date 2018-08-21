@@ -1,34 +1,36 @@
 //var request = require('request');
-var request = require('requestretry');
-var executor_config = require('./ibmCommand.config');
-var identity = function(e) {return e};
+const request = require('requestretry');
+const executor_config = require('./ibmCommand.config');
+const identity = function (e) {
+    return e
+};
 
 function ibmCommand(ins, outs, config, cb) {
 
-    var options = executor_config.options;
+    const options = executor_config.options;
     if(config.executor.hasOwnProperty('options')) {
-        var executorOptions = config.executor.options;
-        for (var opt in executorOptions) {
+        const executorOptions = config.executor.options;
+        for (let opt in executorOptions) {
             if(executorOptions.hasOwnProperty(opt)) {
                 options[opt] = executorOptions[opt];
             }
         }
     }
-    var executable = config.executor.executable
-    var jobMessage = {
+    const executable = config.executor.executable;
+    const jobMessage = {
         "executable": executable,
-        "args":       config.executor.args,
-        "env":        (config.executor.env || {}),
-        "inputs":     ins.map(identity),
-        "outputs":    outs.map(identity),
-        "options":    options
+        "args": config.executor.args,
+        "env": (config.executor.env || {}),
+        "inputs": ins.map(identity),
+        "outputs": outs.map(identity),
+        "options": options
     };
 
     console.log("Executing:  " + JSON.stringify(jobMessage));
 
-    var deploymentType = config.deploymentType;
-    var url = deploymentType ? executor_config.resources[deploymentType] : executor_config.default_url;
-    var resource = deploymentType ? deploymentType : executor_config.default_resource;
+    const deploymentType = config.deploymentType;
+    const url = deploymentType ? executor_config.resources[deploymentType] : executor_config.default_url;
+    const resource = deploymentType ? deploymentType : executor_config.default_resource;
 
     function optionalCallback(err, response, body) {
         if (err) {

@@ -16,16 +16,16 @@ functions:
   ibm-executor-256:
     handler: handler.executor # The file and module for this specific function.
     memory: 256 # memory size for this specific function.
-#    events: # The Events that trigger this Function
+    events: # The Events that trigger this Function
     # This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
-#      - http: POST ibm-executor-256
+      - http: POST ibm-executor-256
 
   ibm-executor-512:
       handler: handler.executor # The file and module for this specific function.
       memory: 512 # memory size for this specific function.
-#      events: # The Events that trigger this Function
+      events: # The Events that trigger this Function
 #       This creates an API Gateway HTTP endpoint which can be used to trigger this function.  Learn more in "events/apigateway"
-#        - http: POST ibm-executor-512
+        - http: POST ibm-executor-512
 
 plugins:
   - serverless-openwhisk
