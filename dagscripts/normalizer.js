@@ -1,26 +1,10 @@
 const fs = require('fs');
 const csvParser = require('fast-csv');
 
-const csvDir = process.argv[2];
-const outputPath = process.argv[3];
+const inputFile = process.argv[2];
+const outputFile = process.argv[3];
 
-if(!csvDir || !outputPath){
-  throw new Error("Provide valid arguments: node normalizer.js DIR_PATH CSV_PATH ");
-}
-
-const stats = fs.statSync(csvDir);
-
-if(!stats.isDirectory()) {
-  throw new Error("Given path is not a directory");
-}
-
-// fs.writeFileSync(outputPath, "task id resource start end time type\n");
-
-fs.readdir(csvDir, (err,files) =>
-  files
-    .filter(file => file.endsWith(".csv"))
-    .forEach(file => normalize(csvDir + "/" + file)
-    ));
+normalize(inputFile);
 
 function normalize(file) {
 
@@ -31,12 +15,8 @@ function normalize(file) {
     .fromPath(file, {delimiter: ' '})
     .on("data", data => {
       let start = data[3];
-      let end = data[4];
+      if (start < minTimestamp) minTimestamp = start;
       dataArr.push(data);
-
-      if (start < minTimestamp) {
-        minTimestamp = start;
-      }
     })
     .on("end", function () {
       dataArr.forEach(data => {
@@ -46,11 +26,15 @@ function normalize(file) {
         let start = data[3];
         let end = data[4];
         let time = data[5];
-        let type = data[6];
+        let downloaded = data[6];
+        let executed = data[7];
+        let uploaded = data[8];
+        let type = data[9];
 
         let normalized_start = start - minTimestamp;
         let normalized_end = end - minTimestamp;
-        fs.appendFileSync(outputPath,`${task} ${id} ${resource} ${normalized_start} ${normalized_end} ${time} ${type}\n`, console.err);
+        fs.appendFileSync(outputFile,`${task} ${id} ${resource} ${normalized_start} ${normalized_end}`
+        + ` ${time} ${downloaded} ${executed} ${uploaded} ${type}\n`, console.err);
       })
     });
 }

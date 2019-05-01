@@ -2,6 +2,7 @@
 ### Eclipse template
 
 .metadata
+notes.txt
 bin/
 tmp/
 *.tmp
@@ -176,3 +177,10 @@ hflow_functions/aws/aws-executor/*
 plots/plots.Rproj
 plots/.RData
 scripts/tmp-times.json
+
+results/
+hflow_functions/aws/aws-command/
+hflow_functions/aws/aws-executor/
+hflow_functions/aws/ellipsoids-binaries/
+hflow_functions/aws/ellipsoids-config/
+hflow_functions/aws/ellipsoids-executor/

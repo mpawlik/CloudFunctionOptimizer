@@ -1,8 +1,9 @@
 # CloudFunctionOptimizer
 
 What will be needed:
-- Node.js (https://nodejs.org)
+- Node.js (https://nodejs.org) (version > 6.4.0)
 - Redis (http://redis.io/)
+- jq (https://stedolan.github.io/jq/)
 - Application DAG
 - Application binaries
 
@@ -46,6 +47,13 @@ serverless deploy
 Copy application binaries and inputs to S3 bucket.
 
 Complete `hyperflow/functions/awsCommand.config.js`, put urls to your functions and path to S3 bucket.
+
+### (Optional) Running .js scripts and getting executables from S3
+
+It is possible to run .js script. When .js file is detected as executable, fork process is created. 
+
+When expected executables are not given during deployment process, the handler will look for them in S3. 
+The files will be downloaded to /tmp, given exec permissions and executed.
 
 ## SDBWS
 
@@ -98,6 +106,12 @@ Parameters:
 Example invocation:
 ```
 ./run.sh ./dag.json output AWS 5 256 512 1024 1536
+```
+
+## jq
+jq is a lightweight and flexible command-line JSON processor.
+```
+brew install jq
 ```
 
 ## Charts
