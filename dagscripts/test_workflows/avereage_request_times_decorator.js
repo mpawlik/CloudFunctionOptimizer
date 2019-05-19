@@ -5,6 +5,9 @@ const csvParser = require('fast-csv');
 const realStartTimesString = "realStartTime";
 const realFinishTimesString = "realFinishTime";
 
+const startTimesString = "startTime";
+const finishTimesString = "finishTime";
+
 const saveToFile = true;
 
 const dagPath = process.argv[2];
@@ -12,12 +15,16 @@ const csvPath = process.argv[3];
 const outputPath = process.argv[4];
 const outputCSV = process.argv[5];
 
+const functionSizes = [256, 512, 1024, 1536, 2048, 2560, 3008];
+
 if(!csvPath || !dagPath || !outputPath || (saveToFile && !outputCSV)){
   throw new Error("Provide valid arguments: node time-decorator.js DAG_PATH CSV_PATH OUTPUT_PATH (OUTPUT_CSV)");
 }
 
-console.log(`DAG file path is ${dagPath}`);
-console.log(`CSV file path is ${csvPath}`);
+console.log(`Input  DAG file path is ${dagPath}`);
+console.log(`Input  CSV file path is ${csvPath}`);
+console.log(`Output DAG file path is ${outputPath}`);
+console.log(`Output CSV file path is ${outputCSV}`);
 
 let dag = fs.readFileSync(dagPath);
 dag = JSON.parse(dag);
@@ -120,22 +127,56 @@ function calculateAverage(times) {
   };
 }
 
+function calculateExecutionTimes(realStartTimes, realFinishTimes, syntheticTime) {
+  let output = {};
+
+  functionSizes.forEach( functionSize => {
+    const startTime = realStartTimes[functionSize];
+    const finishTime = realFinishTimes[functionSize];
+    const duration = finishTime - startTime;
+
+    const baseStartTime = realStartTimes['256'];
+    const baseFinishTime = realFinishTimes['256'];
+    const baseDuration = baseFinishTime - baseStartTime;
+
+    output[functionSize] = Math.round(syntheticTime * duration/baseDuration);
+  });
+
+  return output;
+}
+
+function generateStartTimes() {
+  let output = {};
+
+  functionSizes.forEach( functionSize => {
+    output[functionSize] = 0;
+  });
+
+  return output;
+}
+
 function decorateTaskWithTime(tasks, times) {
   tasks.forEach(task => {
     let taskType = task.name;
 
-    let startTimes = times.startTimes[taskType];
-    let finishTimes = times.finishTimes[taskType];
+    // test workflows captialize mImgTbl this way
+    if (taskType == "mImgTbl") {
+      taskType = "mImgtbl";
+    }
 
-    if (startTimes == undefined || finishTimes == undefined) {
+    let realStartTimes = times.startTimes[taskType];
+    let realFinishTimes = times.finishTimes[taskType];
+
+    if (realStartTimes == undefined || realFinishTimes == undefined) {
       console.log("Warning! Unknown type of task: " + taskType);
     }
 
-    task[realStartTimesString] = {...task[realStartTimesString], ...startTimes};
-    task[realFinishTimesString] = {...task[realFinishTimesString], ...finishTimes};
+    task[realStartTimesString] = {...task[realStartTimesString], ...realStartTimes};
+    task[realFinishTimesString] = {...task[realFinishTimesString], ...realFinishTimes};
 
+    //convert s -> ms
     let syntheticRuntime = task.config.synthetic_runtime * 1000;
-    // console.log(task);
-    // console.log(times.startTimes[taskType]);
+    task[startTimesString] = generateStartTimes();
+    task[finishTimesString] = calculateExecutionTimes(realStartTimes, realFinishTimes, syntheticRuntime);
   })
 }
