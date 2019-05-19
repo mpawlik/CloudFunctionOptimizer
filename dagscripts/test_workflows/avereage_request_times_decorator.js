@@ -8,22 +8,22 @@ const realFinishTimesString = "realFinishTime";
 const startTimesString = "startTime";
 const finishTimesString = "finishTime";
 
-const saveToFile = true;
+const saveToFile = false;
 
 const dagPath = process.argv[2];
 const csvPath = process.argv[3];
-const outputPath = process.argv[4];
+const outputDAG = process.argv[4];
 const outputCSV = process.argv[5];
 
 const functionSizes = [256, 512, 1024, 1536, 2048, 2560, 3008];
 
-if(!csvPath || !dagPath || !outputPath || (saveToFile && !outputCSV)){
+if(!csvPath || !dagPath || !outputDAG || (saveToFile && !outputCSV)){
   throw new Error("Provide valid arguments: node time-decorator.js DAG_PATH CSV_PATH OUTPUT_PATH (OUTPUT_CSV)");
 }
 
 console.log(`Input  DAG file path is ${dagPath}`);
 console.log(`Input  CSV file path is ${csvPath}`);
-console.log(`Output DAG file path is ${outputPath}`);
+console.log(`Output DAG file path is ${outputDAG}`);
 console.log(`Output CSV file path is ${outputCSV}`);
 
 let dag = fs.readFileSync(dagPath);
@@ -65,7 +65,7 @@ csvParser
     let resourceTimes = calculateResourceTimes(idTypeMap);
 
     decorateTaskWithTime(tasks, resourceTimes);
-    fs.writeFile(outputPath, JSON.stringify(dag, null, 2), (err) => { if (err) throw err; });
+    fs.writeFile(outputDAG, JSON.stringify(dag, null, 2), (err) => { if (err) throw err; });
   });
 
 function calculateResourceTimes(idTimeMap) {
