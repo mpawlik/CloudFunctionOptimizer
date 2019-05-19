@@ -3,18 +3,18 @@
 scriptdir=`dirname "$0"`
 appdir=`dirname "${scriptdir}"`
 
-dir=$1
+inputDir=$1
 outputFolder=$2
-directory=${dir}/*
+inputFiles=${inputDir}/*
 
-normalizedLogs="./results/step1/montage_AWS_256_512_1024_1536_2048_2560_3008x5/normalized_logs.csv"
+normalizedLogs="./results-request-duration/montage/sdbcs_x5/step1/montage_AWS_256_512_1024_1536_2048_2560_3008x5/normalized_logs.csv"
 
 
-parser=${appdir}/dagscripts/test_workflows/avereage_execution_times_decorator.js
+parser=${appdir}/dagscripts/test_workflows/avereage_request_times_decorator.js
 
 mkdir -p ${outputFolder}
 
-for f in $directory
+for f in ${inputFiles}
 do
     file="$(basename -- $f)"
     outputFile=${outputFolder}/${file}
