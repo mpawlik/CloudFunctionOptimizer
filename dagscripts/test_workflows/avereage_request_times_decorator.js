@@ -5,7 +5,7 @@ const csvParser = require('fast-csv');
 const startTimesString = "startTime";
 const finishTimesString = "finishTime";
 
-const saveToFile = false;
+const saveToFile = true;
 
 const dagPath = process.argv[2];
 const csvPath = process.argv[3];
@@ -46,10 +46,10 @@ csvParser
     if(!typeTimeMap.get(data.type)) typeTimeMap.set(data.type, []);
     typeTimeMap.get(data.type).push(
       {
-        startTime: Number(data.start),
-        finishTime: Number(data.end),
+        startTime: Number(data.request_start),
+        finishTime: Number(data.request_end),
         downloadedTime: Number(data.downloaded),
-        executedTime: Number(data.executed),
+        executedTime: Number(data.request_duration  ),
         uploadedTime: Number(data.uploaded)
       }
     );
