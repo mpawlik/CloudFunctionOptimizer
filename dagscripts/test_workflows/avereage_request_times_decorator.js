@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const csvParser = require('fast-csv');
 
-const startTimesString = "startTime";
-const finishTimesString = "finishTime";
+const realStartTimesString = "realStartTime";
+const realFinishTimesString = "realFinishTime";
 
 const saveToFile = true;
 
@@ -49,7 +49,7 @@ csvParser
         startTime: Number(data.request_start),
         finishTime: Number(data.request_end),
         downloadedTime: Number(data.downloaded),
-        executedTime: Number(data.request_duration  ),
+        executedTime: Number(data.request_duration),
         uploadedTime: Number(data.uploaded)
       }
     );
@@ -57,8 +57,8 @@ csvParser
   .on("end", function () {
     let resourceTimes = calculateResourceTimes(idTypeMap);
 
-    // decorateTaskWithTime(tasks, resourceTimes);
-    // fs.writeFile(outputPath, JSON.stringify(dag, null, 2), (err) => { if (err) throw err; });
+    decorateTaskWithTime(tasks, resourceTimes);
+    fs.writeFile(outputPath, JSON.stringify(dag, null, 2), (err) => { if (err) throw err; });
   });
 
 function calculateResourceTimes(idTimeMap) {
@@ -122,10 +122,20 @@ function calculateAverage(times) {
 
 function decorateTaskWithTime(tasks, times) {
   tasks.forEach(task => {
-    let id = task.config.id;
-    let startTimes = times.startTimes[id];
-    let finishTimes = times.finishTimes[id];
-    task[startTimesString] = {...task[startTimesString], ...startTimes};
-    task[finishTimesString] = {...task[finishTimesString], ...finishTimes};
+    let taskType = task.name;
+
+    let startTimes = times.startTimes[taskType];
+    let finishTimes = times.finishTimes[taskType];
+
+    if (startTimes == undefined || finishTimes == undefined) {
+      console.log("Warning! Unknown type of task: " + taskType);
+    }
+
+    task[realStartTimesString] = {...task[realStartTimesString], ...startTimes};
+    task[realFinishTimesString] = {...task[realFinishTimesString], ...finishTimes};
+
+    let syntheticRuntime = task.config.synthetic_runtime * 1000;
+    // console.log(task);
+    // console.log(times.startTimes[taskType]);
   })
 }
